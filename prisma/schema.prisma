@@ -1,0 +1,70 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+
+model buildings {
+  id         Int       @id @default(autoincrement())
+  name       String    @default("64") @db.VarChar(255)
+  desc       String    @default("128") @db.VarChar(255)
+  address    Json
+  attributes Json
+  is_active  Boolean
+  created_at DateTime  @default(now()) @db.Timestamp
+  updated_at DateTime  @default(now()) @db.Timestamp
+  floors     floors[]
+
+  @@map("buildings")
+}
+
+model floors {
+  id          Int       @id @default(autoincrement())
+  building_id Int
+  name        String    @db.VarChar(64)
+  desc        String    @db.VarChar(128)
+  elevation   Int
+  floor_map   String    @db.VarChar(1024)
+  attributes  Json
+  is_active   Boolean
+  created_at  DateTime  @default(now()) @db.Timestamp
+  updated_at  DateTime  @default(now()) @db.Timestamp
+  building    buildings @relation(fields: [building_id], references: [id])
+
+  @@map("floors")
+}
+
+
+model audit_log {
+  id         Int      @id @default(autoincrement())
+  type_id    Int
+  meta_data  Json
+  created_at DateTime @default(now()) @db.Timestamp
+  updated_at DateTime @default(now()) @db.Timestamp
+  audit_log_type audit_log_type @relation(fields: [type_id], references: [id])
+
+  @@map("audit_log")
+}
+
+model audit_log_type {
+  id         Int      @id @default(autoincrement())
+  name       String   @db.VarChar(24)
+  desc       String   @db.VarChar(128)
+  priority   Int
+  attributes Json
+  created_at DateTime @default(now()) @db.Timestamp
+  updated_at DateTime @default(now()) @db.Timestamp
+  audit_log audit_log[]
+
+  @@map("audit_log_type")
+}
