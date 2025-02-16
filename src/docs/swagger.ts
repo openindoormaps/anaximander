@@ -2,6 +2,7 @@
 // File: src/docs/swagger.ts
 import { Express, Request, Response } from 'express';
 import swaggerJsdoc from 'swagger-jsdoc';
+import path from 'path';
 
 const options: swaggerJsdoc.Options = {
   definition: {
@@ -9,7 +10,7 @@ const options: swaggerJsdoc.Options = {
     info: {
       title: 'Open Indoor Maps API',
       version: '1.0.0',
-      description: 'API for Open Indoor Maps',
+      description: 'API documentation for Open Indoor Maps',
     },
     servers: [
       {
@@ -17,7 +18,16 @@ const options: swaggerJsdoc.Options = {
       },
     ],
   },
-  apis: ['./src/modules/**/*.ts'], // Path to the API docs
+  apis: [
+    // Include all controller files explicitly
+    path.join(__dirname, '../modules/**/**.controller.ts'),
+    path.join(__dirname, '../modules/**/*.controller.ts'),
+    // Include route files if you have separate route definitions
+    path.join(__dirname, '../routes/**/*.ts'),
+    // Include any additional files that might contain swagger documentation
+    path.join(__dirname, '../**/*.swagger.ts'),
+  ],
 };
 
 export const swaggerSpec = swaggerJsdoc(options);
+

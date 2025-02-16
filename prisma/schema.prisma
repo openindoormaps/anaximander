@@ -1,9 +1,6 @@
 // This is your Prisma schema file,
 // learn more about it in the docs: https://pris.ly/d/prisma-schema
 
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -12,7 +9,6 @@ datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
 }
-
 
 model buildings {
   id         Int       @id @default(autoincrement())
@@ -24,8 +20,11 @@ model buildings {
   created_at DateTime  @default(now()) @db.Timestamp
   updated_at DateTime  @default(now()) @db.Timestamp
   floors     floors[]
+  building_users building_users[]
 
   @@map("buildings")
+  @@index([name]) // Add index for name field
+  @@index([is_active]) // Add index for is_active field
 }
 
 model floors {
@@ -42,8 +41,9 @@ model floors {
   building    buildings @relation(fields: [building_id], references: [id])
 
   @@map("floors")
+  @@index([name]) // Add index for name field
+  @@index([is_active]) // Add index for is_active field
 }
-
 
 model audit_log {
   id         Int      @id @default(autoincrement())
@@ -67,4 +67,67 @@ model audit_log_type {
   audit_log audit_log[]
 
   @@map("audit_log_type")
+}
+
+model User {
+  id             Int              @id @default(autoincrement())
+  user_name      String           @unique @db.VarChar(12)
+  first_name     String           @db.VarChar(64)
+  last_name      String?          @db.VarChar(64)
+  email          String           @unique @db.VarChar(128)
+  hashed_password String           @db.VarChar(1024)
+  is_sso         Boolean          @default(false)
+  sso_type_id    Int?
+  role_id        Int
+  is_active      Boolean          @default(true)
+  created_at     DateTime         @default(now()) @db.Timestamp
+  updated_at     DateTime         @default(now()) @db.Timestamp
+  role           UserRole         @relation(fields: [role_id], references: [id])
+  building_users building_users[]
+  @@map("users")
+}
+
+model Sso {
+  id         Int       @id @default(autoincrement())
+  name       String    @unique @db.VarChar(255)
+  desc       String    @db.VarChar(255)
+  attributes Json
+  is_active  Boolean
+  created_at DateTime  @default(now()) @db.Timestamp
+  updated_at DateTime  @default(now()) @db.Timestamp
+   @@map("sso")
+}
+
+model UserRole {
+  id          Int           @id @default(autoincrement())
+  name        String        @db.VarChar(12)
+  desc        String        @db.VarChar(64)
+  is_active   Boolean       @default(true)
+  created_at  DateTime      @default(now()) @db.Timestamp
+  updated_at  DateTime      @default(now()) @db.Timestamp
+  permissions Permission[]
+  users       User[]
+   @@map("user_roles")
+}
+
+model Permission {
+  id         Int      @id @default(autoincrement())
+  role_id    Int
+  permission Json
+  created_at DateTime @default(now()) @db.Timestamp
+  updated_at DateTime @default(now()) @db.Timestamp
+  role       UserRole @relation(fields: [role_id], references: [id])
+    @@map("permissions")
+}
+
+model building_users {
+  id         Int       @id @default(autoincrement())
+  building_id Int
+  user_id  Int
+  created_at DateTime @default(now()) @db.Timestamp
+  updated_at DateTime @default(now()) @db.Timestamp
+   building buildings @relation(fields: [building_id], references: [id])
+   user User @relation(fields: [user_id], references: [id])
+
+  @@map("building_users")
 }
